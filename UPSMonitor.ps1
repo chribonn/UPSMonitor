@@ -1,27 +1,36 @@
 <#
 .SYNOPSIS 
-    This script monitors a UPS that registers as a win32-battery device and calls an external script if conditions are met. The external script is beyond the scope of this powerscript although the sample included will shut downt he current computer.
+    This script monitors a UPS that registers as a win32-battery device and sends email alerts and / or logs to a file the state changes in the UPS.
 
-    Other actions of the called script would be to send an alert or shutdown a group of machines.
+    If it detects a power failure the utility will trigger an optional script that can perform any action such as initiating computer shutdown.
+    
+    This script is triggered based on battery state, remaining run time and percentage capacity.
 
     This script write to the event viewer and will need administrative privalages to create the entry the first time.  This can be aceived by running the script with administrative rights the first time or create it before executing the script.
     Ref: https://stackoverflow.com/questions/9564420/the-source-was-not-found-but-some-or-all-event-logs-could-not-be-searched
     
 .DESCRIPTION 
-    This script periodically polls the win32-battery for status and availability conditions. If triggered it will report to the user and shut down the computer
+ UPSMonitor is a utility written and tested in Powershell script (v 7.1) that taps into the Microsoft OS *Win32_Battery* class in order to provide the following  functions:
 
-    Battery Reference: https://docs.microsoft.com/en-us/windows/win32/cimwin32prov/win32-battery
+* Email alerts 
+* Logging functions
+* Action script 
 
-    **************************
-    Event Log
+UPSMonitor monitors the UPS Battery state, the percentage capacity remaining and the estimatd run time remaining (in minutes).  It raised email alerts, logs to the log file or invoke the shutdown script based on these settings.
 
-    The script writes to the log and (optionally) sends an email. The log name is defined by 'EventLogName'. If the EventLog does not exists it needs to be created.
- 
-    The IDs are documented under the EventType ennumeration.
+All options are customisable and optional. UPSMonitor can be setup so that no email alerts are generated, or have logging switched off. The Action script is optional as well. At least one of the three options must be activated for the utility to run (let's save CPU cycles if nothing useful is coming out of this.)
+
+For more information type
+    get-help .\UPSMonitor.ps1
+or
+    .\UPSMonitor.ps1 -help
+
+The most uptodate version of this utility can be downloaded from https://github.com/chribonn/UPSMonitor
          
 .NOTES 
     File Name  : UPSMonitor.ps1 
-    Requires   : PowerShell Version 7.1
+    Version    : 0.1
+    Tested on  : PowerShell Version 7.1
     
 .PARAMETER TriggerShutdownPerc
 The Percentage remaining charge before triggering a shutdown
@@ -51,7 +60,34 @@ This is the name of the Shutdown Script that will be called when computers are t
 The full path to the script must be specified. If no file is specified the file will not be called.
 .PARAMETER Help
 Show this help text.
-#>
+.LINK
+Latest version and documentation: https://github.com/chribonn/UPSMonitor
+.EXAMPLE
+* Do not log to a file
+* Enable Email alerts (using google smtp)
+* Invoke a Shutdown Script file called .\Shutdown.ps1 if the reserve UPS battery goes below either 30% or 20 minutes
+* Poll the UPS every 5 seconds
+
+.\UPSMonitor.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -EmailTo "<notification email>" -EmailFromUn "<send email username>" -EmailFromPw "<send email password>" -EmailSMTP = "smtp.gmail.com" -EmailSMTPPort 587 -EmailSMTPUseSSL = 1 -PollFrequency 5 ShutdownScript ".\\Shutdown.ps1"
+
+.EXAMPLE
+* Log to a file "C:\UPSLog\UPSMonitor.log"
+* No Email alerts
+* Invoke a Shutdown Script file called .\Shutdown.ps1 if the reserve UPS battery goes below either 30% or 20 minutes
+* Poll the UPS every 10 seconds
+
+ .\UPSMonitor.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -LogDir = "C:\\UPSLog" -LogFile "UPSMonitor.log" -PollFrequency 10 -ShutdownScript ".\\Shutdown.ps1"
+
+.EXAMPLE
+* Log to a file "C:\UPSLog\UPSMonitor.log"
+* No Email alerts
+* Set the UPS battery triggers (for emails and logs) at 50% and 50 minutes
+* Don't invoke a ShutdownScript if the reserve UPS battery goes below the trigger values
+* Poll the UPS every 5 seconds
+
+ .\UPSMonitor.ps1 -TriggerShutdownPerc 50 -TriggerShutDownRunTime 50 -LogDir "C:\\UPSLog" -LogFile "UPSMonitor.log" -PollFrequency 5
+
+ #>
 
 param (
     [Parameter(Mandatory=$false)] [ValidateRange(1, 100)] [int] $TriggerShutdownPerc = 50,
@@ -70,8 +106,11 @@ param (
 )
 
 if ($help) {
-    write-host 'This script is used to monitor your windows installed UPS and allows you to programatically set it to shutdown your computers. '
-    Write-Host '<<add parameter information>>'
+    write-host "UPSMonitor is a utility written and tested in Powershell script (v 7.1) that taps into the Microsoft OS Win32_Battery class in order to provide the following optional functions:"
+    Write-Host "`tEmail alerts"
+    Write-Host "`tAction script"
+    Write-Host "`n`r"
+    Write-Host "The most up-to-date version of this utility and documentation is available from https://github.com/chribonn/UPSMonitor"
 }
 
 New-Variable -Name CodeRef -Value "UPSMonitor" -Option Constant
@@ -315,6 +354,30 @@ New-Variable -Name Details
 New-Variable -Name Subject
 New-Variable -Name EventLogMsg
 
+Write-Debug -Message "Program starting"
+
+# Is ShutdownScript Valid?
+$ShutdownScript = ValidDateShutdownScript
+
+<# if no email, no log file and no ShutdownScript has been exit. There is nothing to do here.#>
+if ((-not $PSBoundParameters.ContainsKey('EmailTo')) -and (-not $PSBoundParameters.ContainsKey('LogDir')) -and (-not $ShutdownScript)) {
+    exit
+}
+
+#   Has a Logfile been specified
+if (-not $PSBoundParameters.ContainsKey('LogFile')) {
+    $LogFile = $null
+}
+else {
+    #   If the directory for the log file has not been specified, assume it is current directory
+    if (-not $PSBoundParameters.ContainsKey('LogDir')) {
+        $LogDir = Get-Location
+    }
+
+	New-Variable -Name LogPath -Value @(Join-Path -Path "$LogDir" -ChildPath "$LogFile") -Option Constant 
+}
+
+
 # Script currently only works with Windows OS
 Write-Debug -Message "Is this OS suppored?"
 if (-not $IsWindows) {
@@ -328,21 +391,6 @@ if (-not $IsWindows) {
     Write-Debug $EventLogMsg
 	
 	exit
-}
-
-Write-Debug -Message "Program starting"
-
-#   If no log file is specified exit
-if (-not $PSBoundParameters.ContainsKey('LogFile')) {
-    $LogFile = $null
-}
-else {
-    #   If the directory for the log file has not been specified, assume it is current directory
-    if (-not $PSBoundParameters.ContainsKey('LogDir')) {
-        $LogDir = Get-Location
-    }
-
-	New-Variable -Name LogPath -Value @(Join-Path -Path "$LogDir" -ChildPath "$LogFile") -Option Constant 
 }
 
 # Create the run file. While this file exists the script will loop
@@ -372,8 +420,6 @@ else {
 
 WriteEventLog -EventLog $EventLogName -EventID $([EventType]::ProgramStart) -EventMsg $EventLogMsg -LogDir $LogDir -LogFile $LogFile
 EmailAlert -EmailSubject $EmailSubject -EmailBody $EmailDetails -EmailTo $EmailTo -EmailFromUn $EmailFromUn -EmailFromPw $EmailFromPw -EmailSMTP $EmailSMTP -EmailSMTPPort $EmailSMTPPort -EmailSMTPUseSSL $EmailSMTPUseSSL -LogDir $LogDir -LogFile $LogFile
-
-$ShutdownScript = ValidDateShutdownScript
 
 if (BattNotFound) {
     exit
