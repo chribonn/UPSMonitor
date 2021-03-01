@@ -24,3 +24,19 @@ The most uptodate version of this utility can be downloaded from https://github.
 The purpose of the action script is normally to shutdown the computer. It is invoked when the power supply is off and trigger points (percentage capacity and remainign time) fall below specified values.
 
 The Action script is seperate from UPSMonitor in order to allow users the freedom to set it up to their needs without having to mess with the UPSMonitor core code.  Use cases could be to shut down multiple computers, virtual machines and send alerts (other than built in email).
+
+## Configure Powershell execution policy if you get a PSSecurityException error
+
+If you get an error when you execute the script similar to the one herunder you need to change the execution policy.
+
+    .\UPSMonitor.ps1 : File .\UPSMonitor.ps1 cannot be loaded because running scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
+
+    At line:1 char:1
+    + .\UPSMonitor.ps1 -help
+    + ~~~~~~~~~~~~~~~~
+        + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+        + FullyQualifiedErrorId : UnauthorizedAccess
+	
+Open Powershell as administrator and execute the following
+
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned
