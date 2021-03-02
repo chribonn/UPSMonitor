@@ -12,12 +12,13 @@ for ($j=1; $j -le 10; $j++) {
     [console]::beep(1000,500)
 }
 
+shutdown.exe /s /f /t 5 /d 6:11 /c "Watch-Win32_UPS detected power failure"
 
 # Information on shutdown command: https://ss64.com/nt/shutdown.html or type shutdown at a command prompt
 
 #shut down the computer in 5 seconds
-#shutdown.exe /s /f /t 5 /d 6:11 /c "UPSMonitor detected power failure"
+#shutdown.exe /s /f /t 5 /d 6:11 /c "Watch-Win32_UPS detected power failure"
 
-#shutdown.exe /s /f /t 5 /d 6:11 /c "UPSMonitor detected power failure"
+#shutdown.exe /s /f /t 5 /d 6:11 /c "Watch-Win32_UPS detected power failure"
 
 Start-Sleep -Seconds 5

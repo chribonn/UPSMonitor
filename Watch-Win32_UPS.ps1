@@ -6,24 +6,23 @@
    
  This script is triggered based on battery state, remaining run time and percentage capacity.
 .DESCRIPTION 
- UPSMonitor is a utility written and tested in Powershell script (v 7.1) that taps into the Microsoft OS *Win32_Battery* class in order to provide the following  functions:
+ Watch-Win32_UPS is a utility written and tested in Powershell script (v 7.1) that taps into the Microsoft OS *Win32_Battery* class in order to provide the following  functions:
     Email alerts 
     Logging functions
     Action script 
  
-UPSMonitor monitors the UPS Battery state, the percentage capacity remaining and the estimatd run time remaining (in minutes).  It raised email alerts, logs to the log file or invoke the shutdown script based on these settings.
+Watch-Win32_UPS monitors the UPS Battery state, the percentage capacity remaining and the estimatd run time remaining (in minutes).  It raised email alerts, logs to the log file or invoke the shutdown script based on these settings.
  
-All options are customisable and optional. UPSMonitor can be setup so that no email alerts are generated, or have logging switched off. The Action script is optional as well. At least one of the three options must be activated for the utility to run (let's save CPU cycles if nothing useful is coming out of this.)
+All options are customisable and optional. Watch-Win32_UPS can be setup so that no email alerts are generated, or have logging switched off. The Action script is optional as well. At least one of the three options must be activated for the utility to run (let's save CPU cycles if nothing useful is coming out of this.)
  For more information type
-     get-help .\UPSMonitor.ps1
+     get-help .\Watch-Win32_UPS.ps1
  or
-     .\UPSMonitor.ps1 -help
+     .\Watch-Win32_UPS.ps1 -help
  
- The most uptodate version of this utility can be downloaded from https://github.com/chribonn/UPSMonitor
+ The most uptodate version of this utility can be downloaded from https://github.com/chribonn/Watch-Win32_UPS
  
 .NOTES 
-    File Name  : UPSMonitor.ps1 
-    Version    : 0.1
+    File Name  : Watch-Win32_UPS.ps1 
     Tested on  : PowerShell Version 7.1
 
 .PARAMETER TriggerShutdownPerc
@@ -67,32 +66,32 @@ All options are customisable and optional. UPSMonitor can be setup so that no em
  Show this help text.
 
 .LINK
- Latest version and documentation: https://github.com/chribonn/UPSMonitor
+ Latest version and documentation: https://github.com/chribonn/Watch-Win32_UPS
 
 .EXAMPLE
  * Do not log to a file
  * Enable Email alerts (using google smtp)
- * Invoke a Shutdown Script file called .\Shutdown.ps1 if the reserve UPS battery goes below either 30% or 20 minutes
+ * Invoke a Shutdown Script file called .\Invoke-Shutdown.ps1 if the reserve UPS battery goes below either 30% or 20 minutes
  * Poll the UPS every 5 seconds
 
- .\UPSMonitor.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -EmailTo "<notification email>" -EmailFromUn "<send email username>" -EmailFromPw "<send email password>" -EmailSMTP "smtp.gmail.com" -EmailSMTPPort 587 -EmailSMTPUseSSL 1 -PollFrequency 5 -ShutdownScript ".\\Shutdown.ps1"
+ .\Watch-Win32_UPS.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -EmailTo "<notification email>" -EmailFromUn "<send email username>" -EmailFromPw "<send email password>" -EmailSMTP "smtp.gmail.com" -EmailSMTPPort 587 -EmailSMTPUseSSL 1 -PollFrequency 5 -ShutdownScript ".\\Invoke-Shutdown.ps1"
 
 .EXAMPLE
- * Log to a file "C:\UPSLog\UPSMonitor.log"
+ * Log to a file "C:\UPSLog\Watch-Win32_UPS.log"
  * No Email alerts
- * Invoke a Shutdown Script file called .\Shutdown.ps1 if the reserve UPS battery goes below either 30% or 20 minutes
+ * Invoke a Shutdown Script file called .\Invoke-Shutdown.ps1 if the reserve UPS battery goes below either 30% or 20 minutes
  * Poll the UPS every 10 seconds
  
- .\UPSMonitor.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -LogDir "C:\\UPSLog" -LogFile "UPSMonitor.log" -PollFrequency 10 -ShutdownScript ".\\Shutdown.ps1"
+ .\Watch-Win32_UPS.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -LogDir "C:\\UPSLog" -LogFile "Watch-Win32_UPS.log" -PollFrequency 10 -ShutdownScript ".\\Invoke-Shutdown.ps1"
 
 .EXAMPLE
- * Log to a file "C:\UPSLog\UPSMonitor.log"
+ * Log to a file "C:\UPSLog\Watch-Win32_UPS.log"
  * No Email alerts
  * Set the UPS battery triggers (for emails and logs) at 50% and 50 minutes
  * Don't invoke a ShutdownScript if the reserve UPS battery goes below the trigger values
  * Poll the UPS every 5 seconds
 
- .\UPSMonitor.ps1 -TriggerShutdownPerc 50 -TriggerShutDownRunTime 50 -LogDir "C:\\UPSLog" -LogFile "UPSMonitor.log" -PollFrequency 5
+ .\Watch-Win32_UPS.ps1 -TriggerShutdownPerc 50 -TriggerShutDownRunTime 50 -LogDir "C:\\UPSLog" -LogFile "Watch-Win32_UPS.log" -PollFrequency 5
 #>
 
 param (
@@ -112,23 +111,23 @@ param (
 )
 
 if ($help) {
-    write-host "UPSMonitor is a utility written and tested in Powershell script (v 7.1) that taps into the Microsoft OS Win32_Battery class in order to provide the following optional functions:"
-    Write-Host "`tEmail alerts"
-    Write-Host "`tAction script"
-    Write-Host "`n`r"
-    Write-Host "The most up-to-date version of this utility and documentation is available from https://github.com/chribonn/UPSMonitor"
+    write-host "Watch-Win32_UPS is a utility written and tested in Powershell script (v 7.1) that taps into the Microsoft OS Win32_Battery class in order to provide the following functions:"
+    write-host "`tEmail alerts "
+    write-host "`tLogging functions"
+    write-host "`tAction script "
+    write-host "`n`rWatch-Win32_UPS monitors the UPS Battery state, the percentage capacity remaining and the estimatd run time remaining (in minutes).  It raised email alerts, logs to the log file or invoke the shutdown script based on these settings."
 }
 
-New-Variable -Name CodeRef -Value "UPSMonitor" -Option Constant
-New-Variable -Name UPSMonitor_Version -Value "0.1" -Option Constant
-New-Variable -Name EventLogName -Value "UPSMonitor" -Option Constant
+New-Variable -Name CodeRef -Value "Watch-Win32_UPS" -Option Constant
+New-Variable -Name Code_Version -Value "0.1.002" -Option Constant
+New-Variable -Name EventLogName -Value "Watch-Win32_UPS" -Option Constant
 New-Variable -Name NL -Value "`r`n" -Option Constant 
 
 <#
     The existance of the file below will cause the script to loop. 
     To stop the script gracefully delete this file. 
 #>
-New-Variable -Name RunStateFile -Value "UPSMonitor.run" -Option Constant
+New-Variable -Name RunStateFile -Value "Watch-Win32_UPS.run" -Option Constant
 
 [Flags()]
 enum AlertType {
@@ -178,6 +177,7 @@ function WriteEventLog {
     #>
     if (-not (Test-Path -Path "$LogPath")) {
         New-Item -Path "$LogDir" -Name "$LogFile" -ItemType "file" -Value "DateTime`tEventLog`tEventID`tEventMsg`tBattSysemName`tBattName$NL"
+
     }
 
     if (-not $PSBoundParameters.ContainsKey('BattSystemName')) {
@@ -188,7 +188,7 @@ function WriteEventLog {
         $BattName = ""
     }
 
-    Add-Content -Path "$LogPath" -Value "$(Get-Date -Format 'yyyyMMdd HH:mm:ss K')`t$EventLog`t$EventID`t$EventMsg`t$BattSystemName`t$BattName$NL"
+    Add-Content -Path "$LogPath" -Value "$(Get-Date -Format 'yyyyMMdd HH:mm:ss K')`t$EventLog`t$EventID`t$EventMsg`t$BattSystemName`t$BattName"
 }
 
 function EmailAlert {
@@ -206,7 +206,7 @@ function EmailAlert {
         [parameter(Mandatory=$true)] [String] $LogFile
     )
 
-    if (-not $PSBoundParameters.ContainsKey('EmailTo')) {
+    if ((-not $PSBoundParameters.ContainsKey('EmailTo')) -or (-not $EmailSMTP) -or (-not $EmailSMTPPort)) {
         exit
     }
     
@@ -252,8 +252,6 @@ function InvokeShutdownScript{
 	else {
 		WriteEventLog -EventLog $EventLogName -EventID $([EventType]::Action) -EventMsg "Function InvokeShutdownScript but no script called." -BattSystemName $Battery.SystemName -BattName $Battery.Name -LogDir $LogDir -LogFile $LogFile
 	}
-	
-	return
 }
 
 function ValidDateShutdownScript {
@@ -285,7 +283,7 @@ function ValidDateShutdownScript {
         }
     }
     
-    return $ShutdownScript
+    $ShutdownScript
 }
 
 function BattNotFound {
@@ -346,7 +344,7 @@ function BattNotFound {
         $NoBatteryFound = $true
     }
 
-    return $NoBatteryFound
+    $NoBatteryFound
 }
 
 # ************************** Debug
@@ -365,7 +363,7 @@ Write-Debug -Message "Program starting"
 # Is ShutdownScript Valid?
 $ShutdownScript = ValidDateShutdownScript
 
-<# if no email, no log file and no ShutdownScript has been exit. There is nothing to do here.#>
+# if no email, no log file and no ShutdownScript have been specified then exit. There is nothing to do here.
 if ((-not $PSBoundParameters.ContainsKey('EmailTo')) -and (-not $PSBoundParameters.ContainsKey('LogDir')) -and (-not $ShutdownScript)) {
     exit
 }
@@ -385,7 +383,7 @@ else {
 
 # Script requires version 7 of PS or higher
 if ((Get-Host).Version.Major -lt 7) {
-	$EventLogMsg = "UPSMonitor requires PS version 7 or higher." + $NL + "Script Terminating."
+	$EventLogMsg = "Watch-Win32_UPS requires PS version 7 or higher." + $NL + "Script Terminating."
     $EmailSubject = "[Error] Unsupport PS version used - Script Terminating"
     $EmailDetails = $EventLogMsg
 
@@ -420,25 +418,47 @@ if (-not (Test-Path -Path "$RunFilePath")) {
 
 $Battery = Get-CimInstance -ClassName win32_battery
 
-$EventLogMsg = "UPS Monitor Started (Name: " + $Battery.Name + " / Device ID: " + $Battery.DeviceID
+$EventLogMsg = "UPS Monitor Started (Name: " + $Battery.Name + " / Device ID: " + $Battery.DeviceID + ")"
 $EmailSubject = "[ProgramStart] Script has started"
-$EmailDetails = "Script Name: " + $CodeRef + " (version " + $UPSMonitor_Version + ")" +$NL + 
+$EmailDetails = "Script Name: " + $CodeRef + " (version " + $Code_Version + ")" + $NL + 
     "Battery Name: " + $Battery.Name + $NL +
     "Device ID: " + $Battery.DeviceID + $NL +
-    "To cause the script to exit delete the file " + $RunStateFile
-if ($LogDir) {
-    $EmailDetails = $EmailDetails + $NL + "Log file is at: " + $LogDir
-}
-if ($ShutdownScript) {
-    $EmailDetails = $EmailDetails + $NL + "Shutdown script resides at: " + $LogDir + $NL + "ShutdownScript name: " + $ShutdownScript
-}
-else {
-    $EmailDetails = $EmailDetails + $NL + "No shutdown script defined."
-    
-}
+    "To cause the script to exit delete the file " + $RunStateFile + $NL
 
 WriteEventLog -EventLog $EventLogName -EventID $([EventType]::ProgramStart) -EventMsg $EventLogMsg -LogDir $LogDir -LogFile $LogFile
-EmailAlert -EmailSubject $EmailSubject -EmailBody $EmailDetails -EmailTo $EmailTo -EmailFromUn $EmailFromUn -EmailFromPw $EmailFromPw -EmailSMTP $EmailSMTP -EmailSMTPPort $EmailSMTPPort -EmailSMTPUseSSL $EmailSMTPUseSSL -LogDir $LogDir -LogFile $LogFile
+
+if ($PSBoundParameters.ContainsKey('LogFile')) {
+    $EmailDetails += $NL + "Log path is at: " + $LogPath
+    $EventLogMsg = "Log file is at: " + $LogPath
+
+    WriteEventLog -EventLog $EventLogName -EventID $([EventType]::ProgramStart) -EventMsg $EventLogMsg -LogDir $LogDir -LogFile $LogFile
+}
+else {
+    $EmailDetails + $NL + "No Log file defined."    
+}
+
+if ($PSBoundParameters.ContainsKey('ShutdownScript')) {
+    $EmailDetails += $NL + "ShutdownScript path: " + $ShutdownScript
+    $EventLogMsg = "ShutdownScript path: " + $ShutdownScript
+}
+else {
+    $EmailDetails += $NL + "No shutdown script defined."
+    $EventLogMsg = "No shutdown script defined."
+}
+WriteEventLog -EventLog $EventLogName -EventID $([EventType]::ProgramStart) -EventMsg $EventLogMsg -LogDir $LogDir -LogFile $LogFile
+
+# Log the email communication - The email check needs to be the last check of the parameters as this block results in the emails being sent out.
+if (($PSBoundParameters.ContainsKey('EmailTo')) -and ($EmailSMTP) -and ($EmailSMTPPort)) {
+    $EmailDetails += $NL + "Alerts sent to email: " + $EmailTo + " (SMTP: " + $EmailSMTP + ":" + $EmailSMTPPort + ")"
+    $EventLogMsg = "Alerts sent to email: " + $EmailTo + " (SMTP: " + $EmailSMTP + ":" + $EmailSMTPPort + ")"
+
+    EmailAlert -EmailSubject $EmailSubject -EmailBody $EmailDetails -EmailTo $EmailTo -EmailFromUn $EmailFromUn -EmailFromPw $EmailFromPw -EmailSMTP $EmailSMTP -EmailSMTPPort $EmailSMTPPort -EmailSMTPUseSSL $EmailSMTPUseSSL -LogDir $LogDir -LogFile $LogFile
+}
+else {
+    $EventLogMsg = "Email alerts undefined"
+}
+WriteEventLog -EventLog $EventLogName -EventID $([EventType]::ProgramStart) -EventMsg $EventLogMsg -LogDir $LogDir -LogFile $LogFile
+
 
 if (BattNotFound) {
     exit
@@ -478,7 +498,7 @@ do {
             }
             else {
                 # Log the current state of the discharing battery to the event log
-                $EventLogMsg = "Battery Estimated Remaing Charge: $Battery.EstimatedChargeRemaining % (Minutes: $Battery.EstimatedRunTime)."
+                $EventLogMsg = "Battery Estimated Remaing Charge: " + $Battery.EstimatedChargeRemaining + "% (Minutes: " + $Battery.EstimatedRunTime + ")"
                 if ($Notification -lt [AlertType]::Information) {
                     $Notification = [AlertType]::Information
                 }
@@ -510,7 +530,6 @@ do {
                     &$ShutdownScript
                     $EventLogMsg = "Shutdown Script " + $ShutdownScript + " finished executing"
                     WriteEventLog -EventLog $EventLogName -EventID $([EventType]::Action) -EventMsg $EventLogMsg -BattSystemName $Battery.SystemName -BattName $Battery.Name -LogDir $LogDir -LogFile $LogFile
-                    Remove-Item -Path "$RunFilePath" -Force
                     break
                 }
 
@@ -794,7 +813,8 @@ do {
     }
 
     if ($Notification -ne [AlertType]::NoAlert) {
-        EmailAlert -EmailSubject "[$Notification] $Battery.SystemName/$Battery.Name : $EmailSubject" -EmailBody $EmailDetails  -EmailTo $EmailTo -EmailFromUn $EmailFromUn -EmailFromPw $EmailFromPw -EmailSMTP $EmailSMTP -EmailSMTPPort $EmailSMTPPort -EmailSMTPUseSSL $EmailSMTPUseSSL -LogDir $LogDir -LogFile $LogFile
+		$EmailSubject = "[" + $Notification + "] " + $Battery.SystemName + "/" + $Battery.Name + ": " + $EmailSubject
+		EmailAlert -EmailSubject $EmailSubject -EmailBody $EmailDetails  -EmailTo $EmailTo -EmailFromUn $EmailFromUn -EmailFromPw $EmailFromPw -EmailSMTP $EmailSMTP -EmailSMTPPort $EmailSMTPPort -EmailSMTPUseSSL $EmailSMTPUseSSL -LogDir $LogDir -LogFile $LogFile
     }
 
     Start-Sleep -Seconds $PollFrequency
@@ -813,5 +833,9 @@ do {
 
 Write-Debug -Message "Program exiting"
 
-EmailAlert -EmailSubject "[Information] $CodeRef : Script has stopped" -EmailBody "Terminated. GoodBye."  -EmailTo $EmailTo -EmailFromUn $EmailFromUn -EmailFromPw $EmailFromPw -EmailSMTP $EmailSMTP -EmailSMTPPort $EmailSMTPPort -EmailSMTPUseSSL $EmailSMTPUseSSL -LogDir $LogDir -LogFile $LogFile
-WriteEventLog -EventLog $EventLogName -EventID $([EventType]::ProgramStop) -EventMsg "Script Exiting" -BattSystemName $Battery.SystemName -BattName $Battery.Name -LogDir $LogDir -LogFile $LogFile
+$EmailSubject = "[Information] " + $CodeRef + " : Script has stopped"
+$EventLogMsg = "Script Exiting"
+$EmailDetails = "Terminated. GoodBye."
+
+EmailAlert -EmailSubject $EmailDetails -EmailBody $EmailDetails -EmailTo $EmailTo -EmailFromUn $EmailFromUn -EmailFromPw $EmailFromPw -EmailSMTP $EmailSMTP -EmailSMTPPort $EmailSMTPPort -EmailSMTPUseSSL $EmailSMTPUseSSL -LogDir $LogDir -LogFile $LogFile
+WriteEventLog -EventLog $EventLogName -EventID $([EventType]::ProgramStop) -EventMsg $EventLogMsg -LogDir $LogDir -LogFile $LogFile
