@@ -47,7 +47,7 @@ All options are customisable and optional. Watch-Win32_UPS can be setup so that 
  The SMTP server port (default - 587)
 
 .PARAMETER EmailSMTPUseSSL
- (1 <default> / or 0)
+ Specifies if the SMTP client requires SSL
 
 .PARAMETER LogDir
  The directory where the log file will be retained
@@ -70,11 +70,19 @@ All options are customisable and optional. Watch-Win32_UPS can be setup so that 
 
 .EXAMPLE
  * Do not log to a file
- * Enable Email alerts (using google smtp)
+ * Enable Email alerts (using google smtp and requiring SSL)
  * Invoke a Shutdown Script file called .\Invoke-Shutdown.ps1 if the reserve UPS battery goes below either 30% or 20 minutes
  * Poll the UPS every 5 seconds
 
- .\Watch-Win32_UPS.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -EmailTo "<notification email>" -EmailFromUn "<send email username>" -EmailFromPw "<send email password>" -EmailSMTP "smtp.gmail.com" -EmailSMTPPort 587 -EmailSMTPUseSSL 1 -PollFrequency 5 -ShutdownScript ".\\Invoke-Shutdown.ps1"
+ .\Watch-Win32_UPS.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -EmailTo "<notification email>" -EmailFromUn "<send email username>" -EmailFromPw "<send email password>" -EmailSMTP "smtp.gmail.com" -EmailSMTPPort 587 -EmailSMTPUseSSL -PollFrequency 5 -ShutdownScript ".\\Invoke-Shutdown.ps1"
+
+.EXAMPLE
+ * Log to a file "C:\UPSLog\MyUPS.log"
+ * Enable Email alerts (using local SMTP server on port 25 and not requiring SSL). Does not require authentication.
+ * Do not invoke a Shutdown Script
+ * Poll the UPS every 30 seconds
+
+ .\Watch-Win32_UPS.ps1 -TriggerShutdownPerc 50 -TriggerShutDownRunTime 20 -EmailTo "<notification email>" -EmailFromUn "<send email username>" -EmailSMTP "localhost" -EmailSMTPPort 25 -PollFrequency 30
 
 .EXAMPLE
  * Log to a file "C:\UPSLog\Watch-Win32_UPS.log"
@@ -82,7 +90,7 @@ All options are customisable and optional. Watch-Win32_UPS can be setup so that 
  * Invoke a Shutdown Script file called .\Invoke-Shutdown.ps1 if the reserve UPS battery goes below either 30% or 20 minutes
  * Poll the UPS every 10 seconds
  
- .\Watch-Win32_UPS.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -LogDir "C:\\UPSLog" -LogFile "Watch-Win32_UPS.log" -PollFrequency 10 -ShutdownScript ".\\Invoke-Shutdown.ps1"
+ .\Watch-Win32_UPS.ps1 -TriggerShutdownPerc 30 -TriggerShutDownRunTime 20 -LogDir "C:\\UPSLog" -LogFile "MyUPS.log" -PollFrequency 10 -ShutdownScript ".\\Invoke-Shutdown.ps1"
 
 .EXAMPLE
  * Log to a file "C:\UPSLog\Watch-Win32_UPS.log"
@@ -102,7 +110,7 @@ param (
     [Parameter(Mandatory=$false)] [string] $EmailFromPw = $null,
     [Parameter(Mandatory=$false)] [string] $EmailSMTP = "smtp.gmail.com",
     [Parameter(Mandatory=$false)] [ValidateRange(0, 65535)] [int] $EmailSMTPPort = 587,
-    [Parameter(Mandatory=$false)] [bool] $EmailSMTPUseSSL = 1,
+    [switch] $EmailSMTPUseSSL,
     [Parameter(Mandatory=$false)] [string] $LogDir = $null,
     [Parameter(Mandatory=$false)] [string] $LogFile = $null,
     [Parameter(Mandatory=$false)] [string] $PollFrequency = 5,
@@ -118,8 +126,15 @@ if ($help) {
     write-host "`n`rWatch-Win32_UPS monitors the UPS Battery state, the percentage capacity remaining and the estimatd run time remaining (in minutes).  It raised email alerts, logs to the log file or invoke the shutdown script based on these settings."
 }
 
+if ($EmailSMTPUseSSL) {
+    $EmailSMTPUseSSL = $true
+}
+else {
+    $EmailSMTPUseSSL = $false
+}
+
 New-Variable -Name CodeRef -Value "Watch-Win32_UPS" -Option Constant
-New-Variable -Name Code_Version -Value "0.1.002" -Option Constant
+New-Variable -Name Code_Version -Value "0.1.003" -Option Constant
 New-Variable -Name EventLogName -Value "Watch-Win32_UPS" -Option Constant
 New-Variable -Name NL -Value "`r`n" -Option Constant 
 
@@ -200,7 +215,7 @@ function EmailAlert {
         [parameter(Mandatory=$true)] [String] $EmailFromPw,
         [parameter(Mandatory=$true)] [String] $EmailSMTP, 
         [parameter(Mandatory=$true)] [String] $EmailSMTPPort,
-        [parameter(Mandatory=$true)] [String] $EmailSMTPUseSSL,
+        [parameter(Mandatory=$true)] [bool] $EmailSMTPUseSSL,
         [parameter(Mandatory=$false)] [String] $EventLogName = $EventLogName,
         [parameter(Mandatory=$true)] [String] $LogDir,
         [parameter(Mandatory=$true)] [String] $LogFile
