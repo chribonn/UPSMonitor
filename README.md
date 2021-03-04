@@ -132,7 +132,7 @@ Attempt to restart up to <span style="color:yellow">(This ensures that if for so
 
 Stop the task if it runs longer than: *Unchecked* 
 
-If the running task does not end when requested, force it to stop <span style="color:yellow">(The solution can be termined gracefully so there should not be a need have this option)</span>: *Unchecked* 
+If the running task does not end when requested, force it to stop <span style="color:yellow">(The solution can be terminated gracefully so there should not be a check this option)</span>: *Unchecked* 
 
 
 ### Task Scheduler -> Specify Credentials
