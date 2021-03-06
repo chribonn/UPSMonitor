@@ -141,3 +141,25 @@ If the running task does not end when requested, force it to stop <span style="c
 
 After clicking **OK** Task Scheduler will prompt for a password under which this task will execute.
 
+
+## Reset Logs
+
+Part of this archive is a utility called **Reset-Logs.ps1** that will reset the Watch-Win32_UPS log file.
+
+It takes three parameters:
+
+* The current log file
+* (*Optional*) backup log file
+* (*Optional*) header record
+
+The current log file is moved to the backup log file and the header record is written to the newly reset current log file.
+
+While this utility is bundled with this code base it can be directed towards other similar situations.
+
+
+The purpose of the action script is normally to shutdown the computer. It is invoked when the power supply is off and trigger points (percentage capacity and remaining time) fall below specified values.
+
+The Action script is seperate from Watch-Win32_UPS core script. This has been done in order to allow users the freedom to set it up to their needs without having to mess with the Watch-Win32_UPS core code.  Use cases could be to shut down multiple computers, virtual machines and send alerts (other than built in email).
+
+The bundled action script is called **Invoke-Shutdown.ps1**.
+
