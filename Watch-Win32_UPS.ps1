@@ -124,6 +124,8 @@ if ($help) {
     write-host "`tLogging functions"
     write-host "`tAction script "
     write-host "`n`rWatch-Win32_UPS monitors the UPS Battery state, the percentage capacity remaining and the estimatd run time remaining (in minutes).  It raised email alerts, logs to the log file or invoke the shutdown script based on these settings."
+	
+	exit
 }
 
 if ($EmailSMTPUseSSL) {
@@ -222,7 +224,7 @@ function EmailAlert {
     )
 
     if ((-not $PSBoundParameters.ContainsKey('EmailTo')) -or (-not $EmailSMTP) -or (-not $EmailSMTPPort)) {
-        exit
+        return
     }
     
     # Do not use the -Computerhere as this function since this is more associated with email functionality rather than UPS (Battery operation)

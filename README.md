@@ -8,9 +8,9 @@ Watch-Win32_UPS is a utility written and tested in Powershell script (v 7.1) tha
 * Logging functions
 * Action script 
 
-Watch-Win32_UPS monitors the UPS battery state, the percentage capacity remaining and the estimatd run time remaining (in minutes).  It raised email alerts, logs to the file or invokes the shutdown script based on these settings.
+Watch-Win32_UPS monitors the UPS battery state, the percentage capacity remaining and the estimated run time remaining (in minutes).  It raised email alerts, logs to the file or invokes the shutdown script based on these settings.
 
-All options are customisable and optional. Watch-Win32_UPS can be setup so that no email alerts are generated, or have logging switched off. The Action script is optional as well. At least one of the three options must be activated for the utility to run (let's save CPU cycles if nothing useful is coming out of this.)
+All options are customizable and optional. Watch-Win32_UPS can be setup so that no email alerts are generated, or have logging switched off. The Action script is optional as well. At least one of the three options must be activated for the utility to run (let's save CPU cycles if nothing useful is coming out of this.)
 
 For more information type
 
@@ -20,13 +20,13 @@ or
 
     .\Watch-Win32_UPS.ps1 -help
 
-The most uptodate version of this utility can be downloaded from https://github.com/chribonn/UPSMonitor
+The most up-to-date version of this utility can be downloaded from https://github.com/chribonn/UPSMonitor.
 
 ## Action Script
 
 The purpose of the action script is normally to shutdown the computer. It is invoked when the power supply is off and trigger points (percentage capacity and remaining time) fall below specified values.
 
-The Action script is seperate from Watch-Win32_UPS core script. This has been done in order to allow users the freedom to set it up to their needs without having to mess with the Watch-Win32_UPS core code.  Use cases could be to shut down multiple computers, virtual machines and send alerts (other than built in email).
+The Action script is separate from Watch-Win32_UPS core script. This has been done in order to allow users the freedom to set it up to their needs without having to mess with the Watch-Win32_UPS core code.  Use cases could be to shut down multiple computers, virtual machines and send alerts (other than built in email).
 
 The bundled action script is called **Invoke-Shutdown.ps1**.
 
@@ -34,12 +34,12 @@ The bundled action script is called **Invoke-Shutdown.ps1**.
 
 PowerShell 7 or above is required to run this script. This version of PowerShell does not come installed by default on Windows.
 
-Information on how to install this version is available on the  Microsoft page [Installing PowerShell on Windows](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-windows?view=powershell-7.1)
+Information on how to install this version is available on the  Microsoft page [Installing PowerShell on Windows](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-windows?view=powershell-7.1).
 
 
 ## Configure Powershell execution policy if you get a PSSecurityException error
 
-If you get an error when you execute the script similar to the one herunder you need to change the execution policy.
+If you get an error when you execute the script similar to the one hereunder you need to change the execution policy.
 
     .\Watch-Win32_UPS.ps1 : File .\Watch-Win32_UPS.ps1 cannot be loaded because running scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
 
@@ -94,7 +94,7 @@ Action: *Start a program*
 
 Program/script <span style="color:yellow">(Location where PowerScript 7 is installed)</span>: *"C:\Program Files\PowerShell\7\pwsh.exe"*
 
-Add arguments (optional) *<span style="color:yellow">(modify parameters as required)</span>: -ExecutionPolicy Bypass Watch-Win32_UPS.ps1 -TriggerShutdownPerc <span style="color:white;bold">85</span> -TriggerShutDownRunTime <span style="color:white;bold">30</span> <span style="color:green">-EmailTo "alert email" -EmailFromUn "Sender email" -EmailFromPw "Sender email password" -EmailSMTP "SMTP server" -EmailSMTPPort SMTPPort -EmailSMTPUseSSL</span> -PollFrequency <span style="color:white;bold">5</span> <span style="color:orange">-ShutdownScript ".\\Invoke-Shutdown.ps1"</span> <span style="color:pink">-LogDir "C:\\UPSLog" -LogFile "Watch-Win32_UPS.log"</span>*
+Add arguments (optional) *<span style="color:yellow">(modify parameters as required)</span>: -ExecutionPolicy Bypass Watch-Win32_UPS.ps1 -TriggerShutdownPerc <span style="color:white;bold">85</span> -TriggerShutDownRunTime <span style="color:white;bold">30</span> <span style="color:green">-EmailTo "alert email" -EmailFromUn "Sender email" -EmailFromPw "Sender email password" -EmailSMTP "SMTP server" -EmailSMTPPort SMTPPort -EmailSMTPUseSSL</span> -PollFrequency <span style="color:white;bold">5</span> <span style="color:orange">-ShutdownScript ".\Invoke-Shutdown.ps1"</span> <span style="color:pink">-LogDir "C:\UPSLog" -LogFile "Watch-Win32_UPS.log"</span>*
 
 <span style="color:yellow">Optional parameters: </span>
 
@@ -144,17 +144,10 @@ After clicking **OK** Task Scheduler will prompt for a password under which this
 
 ## Reset Logs
 
-Part of this archive is a utility called **Reset-Logs.ps1** that will reset the Watch-Win32_UPS log file.
+ResetLogs.ps1 is a utility originally bundled with this package. It takes a log file, (optionally) emails it, and (optionally) makes a backup of the same.
 
-It takes three parameters:
+This tool has now been moved to a repository of its own as it can be used in other scenarios. It is found at: https://github.com/chribonn/PS_ResetLogs.
 
-* The current log file
-* (*Optional*) backup log file
-* (*Optional*) header record
+## Contact information
 
-The current log file is moved to the backup log file and the header record is written to the newly reset current log file.
-
-It can be programmed into task scheduler to run daily, weekly monthly, etc. For information on how to do this refer to the notes on programming Watch-Win32_UPS with task manager.
-
-### While this utility is bundled with this code base it can be directed towards other similar situations.
-
+Feel free to fork this project and improve it.  If you would like to join the effort to make improvements contact me on chribonn@gmail.com.
