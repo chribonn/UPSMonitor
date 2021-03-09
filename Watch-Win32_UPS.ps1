@@ -136,7 +136,7 @@ else {
 }
 
 New-Variable -Name CodeRef -Value "Watch-Win32_UPS" -Option Constant
-New-Variable -Name Code_Version -Value "0.1.003" -Option Constant
+New-Variable -Name Code_Version -Value "0.1.004" -Option Constant
 New-Variable -Name EventLogName -Value "Watch-Win32_UPS" -Option Constant
 New-Variable -Name NL -Value "`r`n" -Option Constant 
 
@@ -227,23 +227,40 @@ function EmailAlert {
         return
     }
     
-    # Do not use the -Computerhere as this function since this is more associated with email functionality rather than UPS (Battery operation)
+    # Do not use the Battery information here since this module is more associated with email functionality rather than UPS operation.
+    New-Variable -Name SecStr -Value $null -Option private
+    New-Variable -Name Cred -Value $null -Option private
 
-    New-Variable -Name SecStr -Value (ConvertTo-SecureString -string $EmailFromPw -AsPlainText -Force) -Option private
-    New-Variable -Name Cred -Value (New-Object System.Management.Automation.PSCredential -argumentlist $EmailFromUn, $SecStr) -Option private
+    if (($EmailFromUn) -and ($EmailFromPw)) {
+        $SecStr = $(ConvertTo-SecureString -string $EmailFromPw -AsPlainText -Force)
+        $Cred = $(New-Object System.Management.Automation.PSCredential -argumentlist $EmailFromUn, $SecStr)
 
-    try {
-        if ($EmailSMTPUseSSL) {
-            Send-MailMessage -To $EmailTo -From $EmailFromUn -Subject "$CodeRef $(Get-Date -Format 'yyyyMMdd HHmmss K'): $EmailSubject" -Body "$EmailBody" -Credential $Cred -SmtpServer $EmailSMTP -Port $EmailSMTPPort -UseSsl
+        try {
+            if ($EmailSMTPUseSSL) {
+                Send-MailMessage -To $EmailTo -From $EmailFromUn -Subject "$CodeRef $(Get-Date -Format 'yyyyMMdd HHmmss K'): $EmailSubject" -Body "$EmailBody" -Credential $Cred -SmtpServer $EmailSMTP -Port $EmailSMTPPort -UseSsl
+            }
+            else {
+                Send-MailMessage -To $EmailTo -From $EmailFromUn -Subject "$CodeRef $(Get-Date -Format 'yyyyMMdd HHmmss K'): $EmailSubject" -Body "$EmailBody" -Credential $Cred -SmtpServer $EmailSMTP -Port $EmailSMTPPort
+            }
         }
-        else {
-            Send-MailMessage -To $EmailTo -From $EmailFromUn -Subject "$CodeRef $(Get-Date -Format 'yyyyMMdd HHmmss K'): $EmailSubject" -Body "$EmailBody" -Credential $Cred -SmtpServer EmailSMTP -Port EmailSMTPPort
+        catch {
+            WriteEventLog -EventLog $EventLogName -EventID $([EventType]::EmailFailed) -EventMsg "Failed to send $CodeRef email to $EmailTo." -LogDir $LogDir -LogFile $LogFile
         }
     }
-    catch {
-        WriteEventLog -EventLog $EventLogName -EventID $([EventType]::EmailFailed) -EventMsg "Failed to send $CodeRef email to $EmailTo." -LogDir $LogDir -LogFile $LogFile
+    else {
+        # this code segment caters for emails that do not require credentials
+        try {
+            if ($EmailSMTPUseSSL) {
+                Send-MailMessage -To $EmailTo -From $EmailFromUn -Subject "$CodeRef $(Get-Date -Format 'yyyyMMdd HHmmss K'): $EmailSubject" -Body "$EmailBody" -SmtpServer $EmailSMTP -Port $EmailSMTPPort -UseSsl
+            }
+            else {
+                Send-MailMessage -To $EmailTo -From $EmailFromUn -Subject "$CodeRef $(Get-Date -Format 'yyyyMMdd HHmmss K'): $EmailSubject" -Body "$EmailBody" -SmtpServer $EmailSMTP -Port $EmailSMTPPort
+            }
+        }
+        catch {
+            WriteEventLog -EventLog $EventLogName -EventID $([EventType]::EmailFailed) -EventMsg "Failed to send $CodeRef email to $EmailTo." -LogDir $LogDir -LogFile $LogFile
+        }
     }
-
 }
 
 function InvokeShutdownScript{
@@ -856,3 +873,4 @@ $EmailDetails = "Terminated. GoodBye."
 
 EmailAlert -EmailSubject $EmailDetails -EmailBody $EmailDetails -EmailTo $EmailTo -EmailFromUn $EmailFromUn -EmailFromPw $EmailFromPw -EmailSMTP $EmailSMTP -EmailSMTPPort $EmailSMTPPort -EmailSMTPUseSSL $EmailSMTPUseSSL -LogDir $LogDir -LogFile $LogFile
 WriteEventLog -EventLog $EventLogName -EventID $([EventType]::ProgramStop) -EventMsg $EventLogMsg -LogDir $LogDir -LogFile $LogFile
+
