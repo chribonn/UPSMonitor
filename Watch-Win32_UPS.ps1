@@ -136,7 +136,7 @@ else {
 }
 
 New-Variable -Name CodeRef -Value "Watch-Win32_UPS" -Option Constant
-New-Variable -Name Code_Version -Value "0.1.003" -Option Constant
+New-Variable -Name Code_Version -Value "0.1.004" -Option Constant
 New-Variable -Name EventLogName -Value "Watch-Win32_UPS" -Option Constant
 New-Variable -Name NL -Value "`r`n" -Option Constant 
 
@@ -374,6 +374,8 @@ function BattNotFound {
 New-Variable -Name Details
 New-Variable -Name Subject
 New-Variable -Name EventLogMsg
+# Used to monitor a Battery Not Found State - happened with one UPS - It periodically los connection for a few seconds
+New-Variable -Name OrgBattNotFound -Value $false
 
 Write-Debug -Message "Program starting"
 
@@ -799,7 +801,7 @@ do {
                 $EmailSubject = "$EmailSubject /"
                 $EmailDetails = "$EmailDetails $NL"
             }
-            $EmailSubject = "$EmailSubject Battery is in a Degraded state"
+            $EmailSubject = "$EmailSubject Battery is in a degraded state"
             $EventLogMsg = "The Battery is in a degraded state."
                 
             $EmailDetails = "$EmailDetails $EventLogMsg"
@@ -844,6 +846,17 @@ do {
     if (BattNotFound) {
         # Initiate Shutdown
         InvokeShutdownScript -ShutdownScript $ShutdownScript -EventLogName $EventLogName -EventMsg $EventMsg -BattSystemName $BattSystemName -BattName $BattName -LogDir $LogDir -LogFile $LogFile
+        OrgBattNotFound = $true
+    }
+    else {
+        if ($OrgBattNotFound) {
+            $EmailSubject = "[Information] Battery Rediscovered"
+            $EmailBody = "Battery.SystemName: " + $Battery.SystemName + $NL + "Battery Name: " + $Battery.Name + $NL + "Battery Status: " + $Battery.BatteryStatus + $NL + "Battery status changed from not found to found"
+            $EventLogMsg = "Battery Found (Battery Status: " + $Battery.BatteryStatus + ")"
+            EmailAlert -EmailSubject $EmailSubject -EmailBody $EmailDetails  -EmailTo $EmailTo -EmailFromUn $EmailFromUn -EmailFromPw $EmailFromPw -EmailSMTP $EmailSMTP -EmailSMTPPort $EmailSMTPPort -EmailSMTPUseSSL $EmailSMTPUseSSL -LogDir $LogDir -LogFile $LogFile
+            WriteEventLog -EventLog $EventLogName -EventID $([EventType]::Information) -EventMsg "$EventLogMsg" -BattSystemName $Battery.SystemName -BattName $Battery.Name -LogDir $LogDir -LogFile $LogFile
+            OrgBattNotFound = $false
+        }
     }
     
 } while (Test-Path -Path "$RunFilePath")
