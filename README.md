@@ -148,6 +148,16 @@ ResetLogs.ps1 is a utility originally bundled with this package. It takes a log 
 
 This tool has now been moved to a repository of its own as it can be used in other scenarios. It is found at: https://github.com/chribonn/PS_ResetLogs.
 
+
+## Test-* Scripts
+
+Two scripts are included with this archive:
+
+* Test-Email.ps1
+* Test-Win32Battery.ps1
+
+These are simple diagnostics tools that will help verify the email functionality and whether the UPS data can be read.  Using these tools first will ensure that the parameters are correct and the UPS data is readable.
+
 ## Contact information
 
 Feel free to fork this project and improve it.  If you would like to join the effort to make improvements contact me on chribonn@gmail.com.
